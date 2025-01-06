@@ -46,7 +46,7 @@
                     throw new Error("Application ID not found in the URL");
                 }
     
-                const response = await fetch('http://localhost:5000/api/payment/create-order', { 
+                const response = await fetch('https://solarmait.futurebyte.in/api/payment/create-order', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ applicationId }),
@@ -69,7 +69,7 @@
                     handler: async function (paymentResponse) {
                         try {
                             // Pass paymentResponse to the backend for verification
-                            const verificationResponse = await fetch('http://localhost:5000/api/payment/verify-payment', {
+                            const verificationResponse = await fetch('https://solarmait.futurebyte.in/api/payment/verify-payment', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
