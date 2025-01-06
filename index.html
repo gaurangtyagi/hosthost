@@ -1,117 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Mait Payment</title>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 50px auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            text-align: center;
-        }
-        h1 {
-            color: #deba07;
-        }
-        p {
-            color: #555;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Processing Your Payment</h1>
-        <p>Please wait while we redirect you to the payment gateway...</p>
-    </div>
+<script>
+    // Automatically initiate payment on page load
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // Step 1: Extract applicationId from URL query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const applicationId = urlParams.get('applicationId');
 
-    <script>
-        // Automatically initiate payment on page load
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // Step 1: Extract applicationId from URL query parameters
-                const urlParams = new URLSearchParams(window.location.search);
-                const applicationId = urlParams.get('applicationId');
-
-                if (!applicationId) {
-                    throw new Error("Application ID not found in the URL");
-                }
-
-                const payload = {
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    order: orderData, // Include the order ID from Razorpay
-                };
-
-                // Step 2: Fetch Razorpay order ID from your backend with applicationId
-                const response = await fetch('http://localhost:5000/api/payment/create-order', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to create Razorpay order");
-                }
-
-                const orderData = await response.json();
-
-                // Step 3: Configure Razorpay options
-                const options = {
-                    key: "rzp_test_i5CHDnzV5RiUZp", // Replace with your Razorpay Key ID
-                    amount: orderData.amount, // Amount in paise
-                    currency: "INR",
-                    name: "Solar Mait",
-                    description: "Partnership Fees Payment",
-                    image: "https://www.solarmait.com/favicon.png", // Your logo URL
-                    order_id: orderData.id, // Razorpay Order ID from backend
-                    handler: async function (response) {
-                        // Step 4: Verify payment with backend
-                        const verification = await fetch('http://localhost:5000/api/payment/verify-payment', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(response)
-                        });
-                        const verificationResult = await verification.json();
-
-                        if (verification.status === 200) {
-                            alert('Payment successful! 🎉');
-                        } else {
-                            alert('Payment verification failed. Please contact support.');
-                        }
-                    },
-                    prefill: {
-                        name: orderData.name, // Replace with dynamic user name
-                        email: orderData.email, // Replace with dynamic user email
-                        contact: orderData.phone, // Replace with dynamic user phone
-                    },
-                    notes: {
-                        application_id: applicationId, // Pass the applicationId as a note
-                    },
-                    theme: {
-                        color: "#deba07",
-                    },
-                };
-
-                // Step 3: Open Razorpay Checkout
-                const rzp = new Razorpay(options);
-                rzp.open();
-            } catch (error) {
-                console.error("Error during payment process:", error);
-                alert("Something went wrong. Please try again.");
+            if (!applicationId) {
+                throw new Error("Application ID not found in the URL");
             }
-        });
-    </script>
-</body>
-</html>
+
+            // Step 2: Fetch Razorpay order ID from your backend with applicationId
+            const response = await fetch('http://localhost:5000/api/payment/create-order', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ applicationId }), // Send the applicationId to the backend
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to create Razorpay order");
+            }
+
+            const orderData = await response.json();
+
+            // Step 3: Configure Razorpay options
+            const options = {
+                key: "rzp_test_i5CHDnzV5RiUZp", // Replace with your Razorpay Key ID
+                amount: orderData.amount, // Amount in paise
+                currency: "INR",
+                name: "Solar Mait",
+                description: "Partnership Fees Payment",
+                image: "https://www.solarmait.com/favicon.png", // Your logo URL
+                order_id: orderData.id, // Razorpay Order ID from backend
+                handler: async function (paymentResponse) {
+                    // Step 4: Verify payment with backend
+                    const verification = await fetch('http://localhost:5000/api/payment/verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(paymentResponse),
+                    });
+
+                    if (verification.ok) {
+                        alert('Payment successful! 🎉');
+                    } else {
+                        alert('Payment verification failed. Please contact support.');
+                    }
+                },
+                prefill: {
+                    name: orderData.name, // Replace with dynamic user name
+                    email: orderData.email, // Replace with dynamic user email
+                    contact: orderData.phone, // Replace with dynamic user phone
+                },
+                notes: {
+                    application_id: applicationId, // Pass the applicationId as a note
+                },
+                theme: {
+                    color: "#deba07",
+                },
+            };
+
+            // Step 5: Open Razorpay Checkout
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } catch (error) {
+            console.error("Error during payment process:", error);
+            alert("Something went wrong. Please try again.");
+        }
+    });
+</script>
