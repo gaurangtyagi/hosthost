@@ -60,7 +60,12 @@
             }
 
             const orderData = await response.json();
-
+            const payload = {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order: orderData, // Include the order ID from Razorpay
+            };
             // Step 3: Configure Razorpay options
             const options = {
                 key: "rzp_test_i5CHDnzV5RiUZp", // Replace with your Razorpay Key ID
@@ -75,7 +80,7 @@
                     const verification = await fetch('http://localhost:5000/api/payment/verify-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(paymentResponse),
+                        body: JSON.stringify(payload),
                     });
 
                     if (verification.ok) {
