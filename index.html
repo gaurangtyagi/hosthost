@@ -22,7 +22,7 @@
             text-align: center;
         }
         h1 {
-            color: #007bff;
+            color: #deba07;
         }
         p {
             color: #555;
@@ -47,11 +47,18 @@
                     throw new Error("Application ID not found in the URL");
                 }
 
+                const payload = {
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    order: orderData, // Include the order ID from Razorpay
+                };
+
                 // Step 2: Fetch Razorpay order ID from your backend with applicationId
                 const response = await fetch('http://localhost:5000/api/payment/create-order', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: 5000, applicationId }) // Replace 5000 with dynamic amount in INR
+                    body: JSON.stringify(payload),
                 });
 
                 if (!response.ok) {
@@ -85,15 +92,15 @@
                         }
                     },
                     prefill: {
-                        name: "John Doe", // Replace with dynamic user name
-                        email: "john@example.com", // Replace with dynamic user email
-                        contact: "9876543210", // Replace with dynamic user phone
+                        name: orderData.name, // Replace with dynamic user name
+                        email: orderData.email, // Replace with dynamic user email
+                        contact: orderData.phone, // Replace with dynamic user phone
                     },
                     notes: {
                         application_id: applicationId, // Pass the applicationId as a note
                     },
                     theme: {
-                        color: "#007bff",
+                        color: "#deba07",
                     },
                 };
 
